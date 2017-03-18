@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Updates at:
+# https://github.com/johnkramlich/splitcsv
+
+function print_usage {
+	appname=`basename ${0}`
+	echo "Usage: ${appname} [path] [max lines] [optional prefix]"
+	echo ""
+	echo "Arguments:"
+	echo "    path      : the path to the CSV file with the first line being column headings"
+	echo "    max lines : Max number of lines per split file, e.g. 1000"
+	echo "    prefix    : Optional prefix for output files, default value is split_"
+	echo ""
+	echo "Split a CSV file that contains column headings as the first line"
+	echo "into multiple smaller files with the first line being the column headings."
+	echo "This script can be useful in importing a subset of a large dataset, or breaking"
+	echo "an input into smaller batches."
+	echo ""
+	echo "Examples:"
+	echo ""
+	echo "${appname} input.csv 1000"
+	echo "   Split input.csv into multiple smaller csv files, each no longer"
+	echo "   than 1000 lines"
+	echo ""
+	echo "${appname} input.csv 200 sub_"
+	echo "   Split input.csv into multiple smaller csv files, each no longer"
+	echo "   than 200 lines in length, prefixed with sub_"
+	echo ""
+}
+
+if [ "$#" -eq 0 ]; then
+	print_usage
+	exit
+fi
+
+if [ "$#" -eq 3 ]; then
+	prefix="$3";
+else
+	prefix="split_";
+fi
+
+# Might be used later to automatically append the correct file extension
+filename=`basename ${1}`
+extension="${filename##*.}"
+filename="${filename%.*}"
+
+tail -n +2 $1 | split -l $2 - $prefix
+for file in $prefix*
+do
+    head -n 1 $1 > tmp_file
+    cat $file >> tmp_file
+    mv -f tmp_file $file
+done
